@@ -1,0 +1,11 @@
+[project]
+name = "gradial-contracts"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2"]
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+[project.optional-dependencies]
+service = ["fastapi>=0.110", "uvicorn>=0.29"]
+e2e = ["httpx>=0.27", "pytest>=8"]

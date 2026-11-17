@@ -1,0 +1,22 @@
+# Free for public repos; ~1 min per run on private repos (2,000 free min/month on GitHub Free).
+name: phase0-e2e
+on: [push, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -e ".[service,e2e]"
+      - name: Contract + conformance tests
+        run: python -m pytest -q
+      - name: Start service
+        run: |
+          E2E_HOOKS=1 API_KEY=ci-key nohup uvicorn gradial_contracts.service.app:app --port 8000 > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+      - name: End-to-end tests
+        run: E2E_DESTRUCTIVE=1 API_KEY=ci-key BASE_URL=http://127.0.0.1:8000 python -m pytest e2e -v
+      - if: failure()
+        run: cat server.log
